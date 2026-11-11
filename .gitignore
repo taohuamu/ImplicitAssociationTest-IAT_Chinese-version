@@ -1,0 +1,19 @@
+# 被试数据不入库
+iat/data/*.csv
+iat/data/*.json
+iat/data/processed.csv
+iat/data/作废/
+data/*.csv
+data/*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

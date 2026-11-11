@@ -1,156 +1,192 @@
-# Open Source Implicit Association Test
+# 内隐联想测验中文版
 
-Written in PsychoPy, but more flexible than the version bundled with it.
+**简体中文** · [English](README.en.md)
 
-PLEASE NOTE THAT I NO LONGER MAINTAIN THIS CODE. AS PSYCHOPY HAS BEEN UPDATED OVER TIME, IT MAY HAVE BROKEN FEATURES. FEEL FREE TO FORK, FIX AND MAINTAIN THIS CODE IF YOU WISH.
+![license](https://img.shields.io/badge/license-GPLv3-white)
+![python](https://img.shields.io/badge/python-3.10%20~%203.12-white)
+![psychopy](https://img.shields.io/badge/psychopy-2021%2B-white)
+![platform](https://img.shields.io/badge/platform-Windows-white)
 
-[TOC]
+一个可以直接跑的中文内隐联想测验（IAT）程序。实验材料、指导语、按键、区块结构、计分参数全部写在
+一份 `config.yaml` 里，换实验材料不需要改代码。
+
+它按 Greenwald 等（2003）的改进算法算 D 值，按中科院心理所公开的七区块设计排试次，
+每个试次的数据逐条落盘。它不带界面向导，不做数据分析图，也不联网。
+
+**[使用说明](使用说明.md)** · [设计档案](docs/design.md) · [上游版本存档](README.upstream.md)
+
+---
+
+## 为什么重写
+
+GitHub 上能搜到的开源 IAT 实现，多数是 PsychoPy 早期版本的产物：Python 2 写的，
+现代 PsychoPy 打不开；实验材料散在三个 xlsx 里，换个词要在表格间来回对；左右位置靠约定，
+写错不会报错，只会让数据悄悄错掉。
+
+这个仓库的原身就是其中之一。它能跑，但每次改材料都要重读一遍源码，改完还不确定对不对。
+
+于是重写了一遍。核心判断只有一条：**实验内容属于配置，不属于代码。** 换词表、改指导语、
+换按键、调区块试次数，都应该是改一个文本文件、跑一次自检就能完成的事，而不是改 Python。
+
+## 与上游版本的区别
+
+| 项 | 上游（IAT.py） | 本版 |
+|---|---|---|
+| 运行环境 | Python 2，现代 PsychoPy 打不开 | Python 3.10 至 3.12，PsychoPy 2021 之后 |
+| 改实验材料 | 改 3 个 xlsx，左右位置靠约定 | 改 `config.yaml`，启动时校验 |
+| 中文显示 | 字体写死 Arial，中文显示为方框 | 自动查找系统中文字体 |
+| 试次平衡 | 每个类别必须正好 5 个样例 | 任意数量，按类别轮转取词 |
+| 配对顺序 | 靠被试编号奇偶反推 | 编号前缀 T / F 显式指定，并写入数据 |
+| 计分 | 需要装 R 与 RStudio | `score.py`，纯 Python |
+| 数据列 | `accuracy` 是反向的（1 表示错） | 拆成 `first_key_correct` 等自解释列 |
+
+上游的 `IAT.py`、`IAT.psyexp`、三个 xlsx 与示例图片**保持原样未改动**，作为存档保留。
+两者的说明文字分别见 [README.upstream.md](README.upstream.md) 与本文件。
+
+## 实验设计
+
+七个区块，合计 180 试次，约需 4 分半。区块 1 为属性词辨别，区块 2 为目标词辨别，
+区块 3、4 为相容联合任务，区块 5 至 7 的左右两侧整体互换。
+
+| 区块 | 左侧 | 右侧 | 试次 | 性质 |
+|---|---|---|---|---|
+| 1 | 消极 | 积极 | 20 | 属性词辨别 |
+| 2 | 虫 | 花 | 20 | 初始目标词辨别 |
+| 3 | 虫 或 消极 | 花 或 积极 | 20 | 初始联合辨别（练习） |
+| 4 | 虫 或 消极 | 花 或 积极 | 40 | 初始联合辨别（正式） |
+| 5 | 花 | 虫 | 20 | 相反目标词辨别 |
+| 6 | 花 或 消极 | 虫 或 积极 | 20 | 相反联合辨别（练习） |
+| 7 | 花 或 消极 | 虫 或 积极 | 40 | 相反联合辨别（正式） |
+
+被试编号以 T 开头者先做相容配对，以 F 开头者先做不相容配对，两类交替安排以抵消顺序效应。
+表中的左右安排是 T 组的样子，F 组整体镜像。
+
+区块 1、2、5 答错会显示红叉并要求按对才继续；区块 3、4、6、7 答错直接进入下一题。
+两种规则都逐试次写进数据，计分时按数据里的记录处理，不看当前配置。
+
+## 工作原理
+
+程序读一份 YAML 配置，校验通过后按布局定义生成七个区块，逐试次呈现并记录。
+
+**计时基准。** 反应时从刺激真正出现在屏幕上的那一帧起算，取 `win.flip()` 返回的翻转时刻，
+不用配置里标称的 0.3 秒。名义延迟与真实翻转之间有几十毫秒的浮动，拿标称值算会引入系统偏差。
+按键时刻取自 `getKeys` 的事件时间戳，两者相减，实测误差在 1 毫秒以内。
+
+**启动即校验。** 配置有问题就停下并说明原因，不带着错误把一整场做完才发现数据不可用。
+校验覆盖布局引用、占位符能否填充、相容配对能否成立、计分参数是否合理。
+
+**逐条落盘。** 每完成一个试次就写一行并刷新缓冲区。中途按 Esc 退出或程序异常，已完成的试次不会丢。
+
+**配置快照。** 每次施测把当时的完整配置存成同名的 json。投稿后若被问起某个被试用的什么词、
+什么参数，直接看这个文件。
+
+## 三个入口
+
+| 脚本 | 作用 | 何时用 |
+|---|---|---|
+| `check.cmd` | 校验配置，打印七个区块的试次分配，不弹窗 | 每次改完配置 |
+| `run.cmd` | 正式施测，会询问被试编号 | 每次施测 |
+| `score.cmd` | 扫描 data 目录计分，输出 processed.csv | 收完数据 |
+| `edit.cmd` | 用记事本打开 config.yaml | 改材料时 |
+
+改完配置先跑 `check.cmd`。它会指出错在哪一行、哪个区块，比直接施测发现问题要省事得多。
+
+## 安装
+
+前置要求：Windows 10 以上，Python 3.10 至 3.12。
+
+```bash
+pip install psychopy pyyaml
+```
+
+PsychoPy 首次启动需要编译字体缓存，可能耗时数十秒，之后就快了。
+
+装好后双击 `check.cmd`，看到「自检通过」即可开始。
+
+## 换实验材料
+
+打开 `config.yaml`，改 `concepts` 与 `attributes` 里的 `name` 和 `exemplars`，
+保存后跑一次 `check.cmd`。
+
+指导语不需要动。类别名用 `{L}` `{R}` 占位符自动替换，按键用 `{KEY_L}` `{KEY_R}` 替换，
+改词表或改按键都不用回头找指导语。
+
+七个说明页共用一段正文，写在 `instruction_common` 里，改一处七页同步。
+
+## 计分
+
+```bash
+python score.py                      # 扫 data 目录
+python score.py data/T001_xxx.csv    # 只算一个被试
+```
+
+严格按 Greenwald 等（2003）Table 4 的十二步：只取区块 3、4、6、7；剔除超时与快速试次；
+合并标准差只用正确试次；错误试次替换为区块均值加 600 毫秒；两个差值分别除以标准差后取平均。
+
+输出 `processed.csv`，一人一行，含 D1、两个分项、正确率、快速试次占比与剔除原因。
+
+## 常见疑问
+
+1. **中文显示成方框**：系统缺中文字体。程序按微软雅黑、黑体的顺序查找，两个都没有时回落到默认字体。
+   装任一中文字体即可。
+2. **双击没反应或一闪而过**：多半是环境变量过长。PsychoPy 启动时把第三方包路径塞进环境变量，
+   Windows 单个变量上限 32767 字符。四个脚本里已设置 `PSYCHOPYNOPACKAGES=1` 规避，
+   直接用命令行启动时要自己设。
+3. **控制台中文乱码**：中文 Windows 默认 GBK。脚本里已执行 `chcp 65001`，若仍乱码属终端问题，不影响数据。
+4. **按 Esc 之后数据还有吗**：有。已完成的试次全部在 csv 里，只是该被试数据不完整，计分时会被标为缺少联合区块。
+5. **能不能中途改配置**：不要。程序只在启动时读一次配置，中途改动不生效，却会让 json 快照与实际行为不符。
+6. **错误率要不要剔除被试**：默认关闭。2003 年原文中这是可选步骤，若论文方法部分声明了，
+   需把 `scoring.error_rate_exclude` 设为 0.10 或 0.20，否则代码不执行这一步。
+7. **数据能不能用 Excel 编辑**：不要。保存动作会改编码与日期格式，程序再读时可能报错。
+8. **一个被试做两遍会覆盖吗**：不会。文件名带时间戳，精确到秒。
+
+## 开发
+
+```bash
+python tests/test_core.py        # 配置校验、区块生成、计分算法
+python iat/run.py --check-only   # 只校验配置，不弹窗
+```
+
+`tests/test_core.py` 不依赖 PsychoPy，可在任何装了 pyyaml 的解释器里跑。
+它覆盖三块：配置读取与合法性判断、三个内置布局的试次结构、计分函数的数值结果。
+
+图形呈现部分没有自动断言。反应时精度靠注入固定延迟的按键事件验证，方法见
+[设计档案](docs/design.md) 第九节。
+
+## 目录
+
+```
+├─ iat/                    程序本体
+│  ├─ run.py               施测主程序
+│  ├─ score.py             计分
+│  ├─ config.yaml          全部实验内容
+│  ├─ check.cmd            校验入口
+│  ├─ run.cmd              施测入口
+│  ├─ score.cmd            计分入口
+│  └─ edit.cmd             编辑配置
+├─ tests/test_core.py      不依赖 PsychoPy 的单元测试
+├─ docs/design.md          实现细节与设计取舍
+├─ 使用说明.md             施测现场用的手册
+├─ README.upstream.md      上游版本说明（存档）
+├─ IAT.py 等               上游版本原文件，未改动
+└─ .gitattributes          换行符规则
+```
+
+## 不要做的事
+
+- **不要把被试数据提交到仓库。** `.gitignore` 已排除 `iat/data/` 下的 csv 与 json，别手动加回来。
+- **不要用 Excel 或 WPS 保存数据文件。** 要清理数据请用脚本另存，不要覆盖原始文件。
+- **不要在施测途中改 `config.yaml`。** 改了不生效，却让快照失真。
+- **不要手写「按错会怎样」这类提示。** 指导语里留 `{ERROR_RULE}` 让程序按配置生成，
+  否则改了 `error_handling` 说明页就和实际行为脱节。
+- **不要改 `error_handling` 却不改论文口径。** 程序行为与论文方法部分必须一致。
+
+## 声明
+
+本仓库的程序实现基于 [ianhussey/IAT](https://github.com/ianhussey/IAT)（Ian Hussey, 2016）的思路重写，
+上游文件原样保留。实验范式源自 Greenwald, McGhee 与 Schwartz（1998），
+区块设计参考中国科学院心理研究所公开的七区块方案，计分遵循 Greenwald, Nosek 与 Banaji（2003）。
 
 ## License
 
-Ian Hussey 2016 (ian.hussey@ugent.be) GPLv3+
-
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-## Version
-
-1.2.1 (2016/04/16)
-
-## Description & purpose
-
-The IAT is an implicit measure of automatic behaviour or automatic biases (Greenwald, Nosek & Banaji, 1998). This implimentation of the IAT has high fidelity to the procedure described in Nosek et al. (2007: the IAT at 7), and to the standard IAT Inquisit script provided by Millisecond. See block layout below. IMHO, fidelity is higher than other freely available alternatives, such as the FreeIAT or OpenIAT (e.g., the latter has a different block layout, and also uses a combination of free responding and accuracy feedback, where the IAT almost invariably uses one or the other but not both).
-
-## Requirements
-
-- [PsychoPy v1.90](https://github.com/psychopy/psychopy/releases/) or above
-  - NB if running the .py file, you must use the Python 2 version of PsychoPy and not the Python 3 version. Opening the .psyexp file in either version and then compiling a .py file from this should produce a .py file that will run in the current PsychoPy version. 
-  - A free and open source program for delivering psychology experiments written in Python. See [here for documentation](http://www.psychopy.org/documentation.html).
-  - PsychoPy runs locally on Windows, Mac, and Linux. It's not possible to run PsychoPy scripts online.
-- [RStudio](https://www.rstudio.com/), a very user friendly interface for R that integrates Knitr and RMarkdown documents, which are used by the processing script to score the data.
-
-## Usage
-
-- You can run either the `.psyexp file` or the `.py` file inside PsychoPy. However, if using the .py file, you must use the Python 2 version of PsychoPy and not the Python 3 version. Opening the .psyexp file in either version and then compiling a .py file from this should produce a .py file that will run in the current PsychoPy version. The task was written in version 1.82.01 but has been tested to run in later versions. 
-- The included stimulus file employs pictures as category stimuli and words as attribute stimuli. However, this implimentation can display any combination of words and/or images for both categories and attributes. To do this, edit the highlighted rows in the excel files: if using text stimuli, put "blank.png" in the appropriate image exemplar column in the stimuli.xlsx file. If using image stimuli, put a single space character in the appropriate column, as empty cells will cause the task to crash and Psychopy will throw an undefined variable error.
-- The escape key quits the task at any time. 
-- The order of presentation of blocks within the task (e.g., whether participants get flowers-positive/insects-negative or flowers-negative/insects-positive first) is determined by the participant code. Odd numbered participants get the former, even numbered participants get the latter. Be careful that this counterbalancing does not covary with your counterbalancing of other experimental conditions.
-  - If you don't enter a participant number the task will crash and refuse to run!
-- Block length is fixed by the code and the `block_layout.xlsx` file, and is independent of the number of stimuli exemplars.
-- The number of exemplars can vary freely; it's currently 6 but can be more or less without this affecting the block length. However, it must be identical across categories. 
-- `.psydat` and `.csv` files are produced for each participant. The `.csv` file is sufficient to most analyses (e.g., calculation of D scores).
-- R script in the analysis folder produces D1 scores (and D1 scores for each stimulus category parcel), as well as accuracy and latency summary data.
-- All stimuli and instructions can be altered by editing the excel files. Indeed, all strings presented within the task are variables, so translating the task into other languages only requires changes to the stimuli and instructions files.
-- ITI is set to 250 ms (see Nosek et al., 2007: the IAT at age 7).
-
-## Block layout
-The current version follows the block layout described in Nosek et al. (2007: the IAT at age 7). The contents of each screen follows the standard Inquisit IAT distribution very closely. However, the Inquisit IAT uses the older block layout of 20 trials in block 5.
-
-- Block 1 (categories) 20 Trials
-- Block 2 (attributes) 20 Trials
-- Block 3 (both) 20 Trials
-- Block 4 (both) 40 Trials
-- Block 5 (categories reversed) 40 Trials
-- Block 6 (both reversed) 20 Trials
-- Block 7 (both reversed) 40 Trials
-
-## Localisation and customisation
-
-All stimuli and instructions within the task are set via the `stimuli.xlsx` and `task.xlsx` files.
-
-PsychoPy has Unicode support, so translating the task into other languages (Spanish, Polish, Japanese, etc.) only requires changes to these excel files.
-
-- NB a poorly documented bug is that if you zip and unzip excel files using archive utility on Mac OS X, Unicode characters are no longer correctly displayed and will throw an ASCII error in PsychoPy. Make new excel files to correct the issue.
-
-## Output
-
-### Data files
-
-`.psydat`, `.csv` and `.log` files are produced for each participant. The `.csv` file alone is sufficient to most analyses (e.g., calculation of D scores). To my understanding, the format of the `.csv` output files are Tidy Data compliant (Wickham, 2014) and therefore easy to analyse (e.g., in R) with little to no processing needed.
-
-### Data processing
-
-The included `processing.rmd` R script produces accuracy and latency summary data and *D*1 scores for each participant (including "overall" *D*1 scores, *D*1 scores for each trial-type, and split-half overall *D*1 scores).
-
-Very little familiarity with R/RStudio is needed to use this script. 
-
-1. Open the script in RStudio.
-2. Click "Knit", this will run the script, save the processed output, and create a html file record.
-
-#### Interpretation of D1 scores
-
-Positive *D*1 scores refer to faster responding on the block where response mappings are shared between trial types 1 & 3 and 2 & 4 (e.g., flowers-positive/insects-negative) than the block where response mappings are shared between trial types 1 & 4 and 2 & 3 (e.g., flowers-negative/insects-positive).
-
-## Known issues
-1. If participants get 100% of trials correct throughout the whole task then three incorrect response columns will not be created for that participant. This is highly unlikely, and futhermore is not a problem if your data processing workflow merges data files across participants based on column header names (e.g., with R using readr's read.csv) rather than column positions (e.g., a SPSS script using a GET command, or some other R commands which assume equivalent table shapes).
-2. Block order is not recorded in the data file, but is derived from the participant code (odd number vs even number). 
-3. “Empty” cells in the instructions file must actually include a whitespace character or task will crash. If text stimuli are used, put “blank.png” in the image stimulus box.
-4. Requires 5 exemplars per category, as the stimuli file conflates block structure with exemplars to be used. I have a method to change this, but haven't implimented it yet.
-5. Stimuli presentations are based on timing rather than screen frames. This is relatively easy to alter, but requires more from the user in terms of setting the script up with their specific hardware. Marginal timing accuracy trade off. 
-
-## Timing accuracy
-
-PsychoPy is technically capable of millosecond timing, depending on design choices by the researcher (see Garaizar & Vadillo, 2014). 
-
-The current implementation is written to be at least as accurate as other implementations of the IRAP (i.e., accurate to within a frame or c.17ms). The stimuli to be presented within a block are generated on the pre-block rule screen, and then `pop()`'d on each trial.
-
-If you're looking for higher accuracy (e.g., for EEG/fMRI work) you'll want to change all timings to frames rather than seconds. You may also want to remove the presentation of images if you're not using them.
-
-- NB no assessment of jitter has been conducted for the current implementation.
-
-## Issues
-
-If you have any issues, find bugs, or observe any unwanted divergences from other implementations please report them [using GitHub's issue reporting system](https://github.com/ianhussey/ImplicitAssociationTest/issues). Doing it online rather than by emailing me allows other people to benefit from your experience. 
-
-If there are additional features or refinements you would like to see please feel free to contribute to the project yourself by branching, editing, and submitting a pull request on Github. You can also email me at [ian.hussey@ugent.be](mailto:ian.hussey@ugent.be). 
-
-## To do
-- Add internal consistency calculation to R script
-
-## Changelog
-1.2.1
-
-- Checked to work in the latest version of psychopy (1.90) and updated the readme.
-
-1.2
-
-- Removed calculation of D1 scores for trial types (e.g., calculated only from insects trials), as this is uncommon in the literature.
-
-
-- Corrected calculation of D1 scores. R script did not take block order into account. Thanks to Jamie Cummins for feedback on this.
-- Corrected order of blocks 1 and 2. Task is now in better in line with Nosek et al. (2007).
-- R script auto now installs its depencies, and produces split half D scores for internal reliability estimations.
-
-1.1
-
-- Seperated stimuli file into exemplars and block_layout. Multiplier is determined by the number of exemplars. As such, the block lengths are fixed by the code, but the number of exemplars can vary freely (although they must be equal across trial types, e.g., all must have N).
-
-1.0.1
-
-R script updated.
-
-1.0
-
-Used in a completed experiment and bug tested. No changes made relative from 0.10, which I've upgraded to a release copy.
-
-0.10
-
-Added new code components so that only a single stimulus file and single blocks file is needed. The contents the category labels and the correct and incorrect responses are determined before each trial based on the trial type, block order and current block. This limits the scope for human error when putting together the stimuli files.
-
-0.9.3
-
-- Corrected ITI from 300ms to 250ms.
-- Allows the researcher to display any combination of word or picture stimuli.
-
-0.9.2
-
-- Rewritten from scratch to make the data files follow Hadley Wickham's Tidy Data standards. Loops now include nested references to the stimuli files, thus allowing for a highly simplified flow and greatly decreased number of routines. The py script has also gone from 3250 lines to 450, and is far more readable. However, this change shifts complexity to the stimulus files: there are now 12 where there were 2. 
-- This rewriting also allowed me to add the ability to choose the block order based on a variable entered in the popup before the experiment (i.e., block order: 1 vs 2).
-
-0.9.1
-
-- changed the instuctions1and5 from "is trials" = true to "is trials" = false so that a superfluous line is not recorded in the data file.
-- changed the endLoop from is trials" = true to "is trials" = false so that a superfluous line is not recorded in the data file.
-- until now, trial blocks 3&4 and 6&7 used the same routines (repsectively) because the contents of these blocks' trials was identical. However, it makes for easier analysis if the data is output in different columns.
-- renamed keyboard components in trial blocks to blockX and blockXwrong. When combined with the above, D scores can be calculated by examining the means and standard deviations of the block1.rt to block7.rt variables, and accuracy exclusions from the block1wrong.corr to block7wrong.corr variables. NB here, the 1s refer to incorrect answers rather than correct answers. The variables specified in the code components for accuracy feedback were also changed appropriately.
+[GPLv3](LICENSE)
