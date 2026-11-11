@@ -7,9 +7,10 @@
 ![psychopy](https://img.shields.io/badge/psychopy-2021%2B-white)
 ![platform](https://img.shields.io/badge/platform-Windows-white)
 
-一个可以直接跑的中文内隐联想测验（IAT）程序。实验材料、指导语、按键、区块结构、计分参数全部写在
-一份 `config.yaml` 里，换实验材料不需要改代码。
+一个可以直接跑的中文内隐联想测验（IAT）程序，在 Ian Hussey 的开源版本基础上汉化，
+按国内被试的使用习惯重新安排了材料、指导语与区块结构。
 
+实验材料、指导语、按键、区块结构、计分参数全部写在一份 `config.yaml` 里，换实验材料不需要改代码。
 它按 Greenwald 等（2003）的改进算法算 D 值，按中科院心理所公开的七区块设计排试次，
 每个试次的数据逐条落盘。它不带界面向导，不做数据分析图，也不联网。
 
@@ -17,30 +18,21 @@
 
 ---
 
-## 为什么重写
+## 相对上游的改动
 
-GitHub 上能搜到的开源 IAT 实现，多数是 PsychoPy 早期版本的产物：Python 2 写的，
-现代 PsychoPy 打不开；实验材料散在三个 xlsx 里，换个词要在表格间来回对；左右位置靠约定，
-写错不会报错，只会让数据悄悄错掉。
-
-这个仓库的原身就是其中之一。它能跑，但每次改材料都要重读一遍源码，改完还不确定对不对。
-
-于是重写了一遍。核心判断只有一条：**实验内容属于配置，不属于代码。** 换词表、改指导语、
-换按键、调区块试次数，都应该是改一个文本文件、跑一次自检就能完成的事，而不是改 Python。
-
-## 与上游版本的区别
+汉化与适配集中在三处：中文能正常显示，材料换了不用改代码，配对顺序写在编号里而不是靠奇偶反推。
 
 | 项 | 上游（IAT.py） | 本版 |
 |---|---|---|
-| 运行环境 | Python 2，现代 PsychoPy 打不开 | Python 3.10 至 3.12，PsychoPy 2021 之后 |
-| 改实验材料 | 改 3 个 xlsx，左右位置靠约定 | 改 `config.yaml`，启动时校验 |
+| 运行环境 | Python 2 | Python 3.10 至 3.12，PsychoPy 2021 之后 |
 | 中文显示 | 字体写死 Arial，中文显示为方框 | 自动查找系统中文字体 |
+| 改实验材料 | 改 3 个 xlsx，左右位置靠约定 | 改 `config.yaml`，启动时校验 |
 | 试次平衡 | 每个类别必须正好 5 个样例 | 任意数量，按类别轮转取词 |
 | 配对顺序 | 靠被试编号奇偶反推 | 编号前缀 T / F 显式指定，并写入数据 |
 | 计分 | 需要装 R 与 RStudio | `score.py`，纯 Python |
 | 数据列 | `accuracy` 是反向的（1 表示错） | 拆成 `first_key_correct` 等自解释列 |
 
-上游的 `IAT.py`、`IAT.psyexp`、三个 xlsx 与示例图片**保持原样未改动**，作为存档保留。
+上游的 `IAT.py`、`IAT.psyexp`、三个 xlsx 与示例图片保持原样未改动，作为对照保留。
 两者的说明文字分别见 [README.upstream.md](README.upstream.md) 与本文件。
 
 ## 实验设计
@@ -183,7 +175,7 @@ python iat/run.py --check-only   # 只校验配置，不弹窗
 
 ## 声明
 
-本仓库的程序实现基于 [ianhussey/IAT](https://github.com/ianhussey/IAT)（Ian Hussey, 2016）的思路重写，
+本仓库在 [ianhussey/IAT](https://github.com/ianhussey/IAT)（Ian Hussey, 2016）的基础上汉化并适配，
 上游文件原样保留。实验范式源自 Greenwald, McGhee 与 Schwartz（1998），
 区块设计参考中国科学院心理研究所公开的七区块方案，计分遵循 Greenwald, Nosek 与 Banaji（2003）。
 

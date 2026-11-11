@@ -19,18 +19,11 @@ and makes no network requests.
 
 ---
 
-## Background
+## What changed from upstream
 
-Most open-source IAT implementations on GitHub are artefacts of an earlier PsychoPy era: written for
-Python 2, unopenable in current PsychoPy, with stimuli scattered across three spreadsheets and
-left/right assignment left to convention. A mistake there raises no error — it silently corrupts data.
-
-This repository began as one of them. It ran, but every change of materials meant re-reading the
-source, and success was never certain.
-
-The rewrite rests on one judgement: **experimental content belongs in configuration, not in code.**
-Swapping stimuli, rewriting instructions, changing keys or trial counts should be an edit to a text
-file plus a validation pass.
+The localisation and adaptation focus on three things: Chinese renders correctly, materials can be
+replaced without touching code, and pairing order is written into the participant ID rather than
+derived from odd/even.
 
 ## Design
 
@@ -99,7 +92,7 @@ see section 9 of the design notes.
 
 ## Attribution
 
-The implementation reworks the approach of [ianhussey/IAT](https://github.com/ianhussey/IAT)
+This repository localises and adapts [ianhussey/IAT](https://github.com/ianhussey/IAT)
 (Ian Hussey, 2016); upstream files are preserved unmodified. The paradigm follows Greenwald, McGhee
 and Schwartz (1998), the block design follows the seven-block scheme published by the Institute of
 Psychology, Chinese Academy of Sciences, and scoring follows Greenwald, Nosek and Banaji (2003).
