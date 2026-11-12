@@ -136,7 +136,7 @@ python score.py data/T001_xxx.csv    # 只算一个被试
 
 ```bash
 python tests/test_core.py        # 配置校验、区块生成、计分算法
-python iat/run.py --check-only   # 只校验配置，不弹窗
+python run.py --check-only   # 只校验配置，不弹窗
 ```
 
 `tests/test_core.py` 不依赖 PsychoPy，可在任何装了 pyyaml 的解释器里跑。
@@ -148,15 +148,14 @@ python iat/run.py --check-only   # 只校验配置，不弹窗
 ## 目录
 
 ```
-├─ iat/                    程序本体
-│  ├─ run.py               施测主程序
-│  ├─ score.py             计分
-│  ├─ config.yaml          全部实验内容
-│  ├─ check.cmd            校验入口
-│  ├─ run.cmd              施测入口
-│  ├─ score.cmd            计分入口
-│  └─ edit.cmd             编辑配置
-├─ tests/test_core.py      不依赖 PsychoPy 的单元测试
+├─ run.py                 施测主程序
+├─ score.py               计分
+├─ config.yaml            全部实验内容
+├─ check.cmd              校验入口
+├─ run.cmd                施测入口
+├─ score.cmd              计分入口
+├─ edit.cmd               编辑配置
+├─ tests/test_core.py     不依赖 PsychoPy 的单元测试
 ├─ docs/design.md          实现细节与设计取舍
 ├─ 使用说明.md             施测现场用的手册
 ├─ README.upstream.md      上游版本说明（存档）
@@ -166,7 +165,7 @@ python iat/run.py --check-only   # 只校验配置，不弹窗
 
 ## 不要做的事
 
-- **不要把被试数据提交到仓库。** `.gitignore` 已排除 `iat/data/` 下的 csv 与 json，别手动加回来。
+- **不要把被试数据提交到仓库。** `.gitignore` 已排除 `data/` 下的 csv 与 json，别手动加回来。
 - **不要用 Excel 或 WPS 保存数据文件。** 要清理数据请用脚本另存，不要覆盖原始文件。
 - **不要在施测途中改 `config.yaml`。** 改了不生效，却让快照失真。
 - **不要手写「按错会怎样」这类提示。** 指导语里留 `{ERROR_RULE}` 让程序按配置生成，

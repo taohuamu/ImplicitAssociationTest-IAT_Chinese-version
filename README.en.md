@@ -84,7 +84,7 @@ fast trials, and the exclusion reason.
 
 ```bash
 python tests/test_core.py        # config validation, block generation, scoring
-python iat/run.py --check-only   # validate config only
+python run.py --check-only   # validate config only
 ```
 
 Tests do not import PsychoPy. Timing accuracy is verified by injecting keypresses at fixed offsets;

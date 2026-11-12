@@ -1,10 +1,8 @@
 # 被试数据不入库
-iat/data/*.csv
-iat/data/*.json
-iat/data/processed.csv
-iat/data/作废/
 data/*.csv
 data/*.json
+data/processed.csv
+data/作废/
 
 # Python
 __pycache__/

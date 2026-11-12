@@ -207,15 +207,14 @@ D 会略微缩小，两组被试的差值方向不变但量级不同。
 
 ```
 ImplicitAssociationTest-IAT_Chinese_version/
-├─ iat/
-│  ├─ run.py               施测主程序
-│  ├─ score.py             计分
-│  ├─ config.yaml          全部实验内容
-│  ├─ check.cmd            校验入口
-│  ├─ run.cmd              施测入口
-│  ├─ score.cmd            计分入口
-│  └─ edit.cmd             编辑配置
-├─ tests/test_core.py      不依赖 PsychoPy 的单元测试
+├─ run.py                 施测主程序
+├─ score.py               计分
+├─ config.yaml            全部实验内容
+├─ check.cmd              校验入口
+├─ run.cmd                施测入口
+├─ score.cmd              计分入口
+├─ edit.cmd               编辑配置
+├─ tests/test_core.py     不依赖 PsychoPy 的单元测试
 ├─ docs/design.md          本文件
 ├─ 使用说明.md             施测现场手册
 ├─ README.md               中文首页
@@ -229,7 +228,7 @@ ImplicitAssociationTest-IAT_Chinese_version/
 
 ```bash
 python tests/test_core.py        # 配置校验、区块生成、计分算法
-python iat/run.py --check-only   # 只校验配置，不弹窗
+python run.py --check-only   # 只校验配置，不弹窗
 ```
 
 `test_core.py` 不导入 PsychoPy，可在任何装了 pyyaml 的解释器里跑。覆盖三块：
@@ -255,4 +254,4 @@ python iat/run.py --check-only   # 只校验配置，不弹窗
 - **不要用 Excel 保存数据文件。** 编码、日期格式、空值写法都会变，程序再读可能报错或读错。
 - **不要改 `error_handling` 却不改论文方法部分。** 程序行为与论文表述必须一致，否则审稿人一问就露。
 - **不要跳过 `check.cmd`。** 它挡住的是那种「跑完一整场才发现配置错」的事故。
-- **不要提交被试数据。** `.gitignore` 已排除 `iat/data/`，别手动加回来。
+- **不要提交被试数据。** `.gitignore` 已排除 `data/`，别手动加回来。

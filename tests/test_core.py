@@ -10,7 +10,7 @@ import statistics as st
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-IAT_DIR = os.path.join(os.path.dirname(HERE), 'iat')
+IAT_DIR = os.path.dirname(HERE)
 sys.path.insert(0, IAT_DIR)
 
 import run as R
