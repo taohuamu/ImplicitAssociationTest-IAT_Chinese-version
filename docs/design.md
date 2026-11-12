@@ -191,7 +191,8 @@ D 会略微缩小，两组被试的差值方向不变但量级不同。
 - **计分只读 csv。** 让数据自描述，比让它依赖当前配置更安全。
 - **不内置数据分析。** 只算 D，不做描述统计、信度分析或作图。这些在 R 里做更合适，也更容易复现。
 - **检查模式不导入 PsychoPy。** 没有图形库的机器上也能校验配置，方便在写材料时不装环境。
-- **保留上游文件。** `IAT.py` 等原样未动，作为对照与出处，不参与运行。
+- **上游文件单独收在 `upstream/`。** 原样未动，作为出处与对照。放在根目录会和本版的两个程序入口混在一起，
+  分不清该跑哪个。
 
 ## 已知局限
 
@@ -207,21 +208,23 @@ D 会略微缩小，两组被试的差值方向不变但量级不同。
 
 ```
 ImplicitAssociationTest-IAT_Chinese_version/
-├─ run.py                 施测主程序
-├─ score.py               计分
-├─ config.yaml            全部实验内容
-├─ check.cmd              校验入口
-├─ run.cmd                施测入口
-├─ score.cmd              计分入口
-├─ edit.cmd               编辑配置
-├─ tests/test_core.py     不依赖 PsychoPy 的单元测试
+├─ run.py                  施测主程序
+├─ score.py                计分
+├─ config.yaml             全部实验内容
+├─ check.cmd               校验入口
+├─ run.cmd                 施测入口
+├─ score.cmd               计分入口
+├─ edit.cmd                编辑配置
+├─ data/                   被试数据，不入版本库
+├─ tests/test_core.py      不依赖 PsychoPy 的单元测试
 ├─ docs/design.md          本文件
 ├─ 使用说明.md             施测现场手册
 ├─ README.md               中文首页
 ├─ README.en.md            英文说明
-├─ README.upstream.md      上游版本说明（存档）
-├─ IAT.py IAT.psyexp 等    上游版本原文件，未改动
-└─ .gitattributes          换行符规则
+├─ upstream/               上游版本原样存档，不参与运行
+├─ LICENSE                 GPLv3
+├─ .gitattributes          换行符规则
+└─ .gitignore              数据与缓存排除规则
 ```
 
 ## 测试

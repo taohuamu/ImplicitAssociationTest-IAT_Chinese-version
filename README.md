@@ -14,7 +14,7 @@
 它按 Greenwald 等（2003）的改进算法算 D 值，按中科院心理所公开的七区块设计排试次，
 每个试次的数据逐条落盘。它不带界面向导，不做数据分析图，也不联网。
 
-**[使用说明](使用说明.md)** · [设计档案](docs/design.md) · [上游版本存档](README.upstream.md)
+**[使用说明](使用说明.md)** · [设计档案](docs/design.md) · [上游版本存档](upstream/README.md)
 
 ---
 
@@ -32,8 +32,8 @@
 | 计分 | 需要装 R 与 RStudio | `score.py`，纯 Python |
 | 数据列 | `accuracy` 是反向的（1 表示错） | 拆成 `first_key_correct` 等自解释列 |
 
-上游的 `IAT.py`、`IAT.psyexp`、三个 xlsx 与示例图片保持原样未改动，作为对照保留。
-两者的说明文字分别见 [README.upstream.md](README.upstream.md) 与本文件。
+上游的 `IAT.py`、`IAT.psyexp`、三个 xlsx 与示例图片原样未动，整体收在 [upstream/](upstream/) 目录里，
+连它自己的 README 与数据脚本一并保留。它们不参与本版运行，只作对照。
 
 ## 实验设计
 
@@ -72,7 +72,7 @@
 **配置快照。** 每次施测把当时的完整配置存成同名的 json。投稿后若被问起某个被试用的什么词、
 什么参数，直接看这个文件。
 
-## 三个入口
+## 四个脚本
 
 | 脚本 | 作用 | 何时用 |
 |---|---|---|
@@ -143,24 +143,26 @@ python run.py --check-only   # 只校验配置，不弹窗
 它覆盖三块：配置读取与合法性判断、三个内置布局的试次结构、计分函数的数值结果。
 
 图形呈现部分没有自动断言。反应时精度靠注入固定延迟的按键事件验证，方法见
-[设计档案](docs/design.md) 第九节。
+[设计档案](docs/design.md) 的「验证方法」一节。
 
 ## 目录
 
 ```
-├─ run.py                 施测主程序
-├─ score.py               计分
-├─ config.yaml            全部实验内容
-├─ check.cmd              校验入口
-├─ run.cmd                施测入口
-├─ score.cmd              计分入口
-├─ edit.cmd               编辑配置
-├─ tests/test_core.py     不依赖 PsychoPy 的单元测试
+├─ run.py                  施测主程序
+├─ score.py                计分
+├─ config.yaml             全部实验内容
+├─ check.cmd               校验入口
+├─ run.cmd                 施测入口
+├─ score.cmd               计分入口
+├─ edit.cmd                编辑配置
+├─ data/                   被试数据，不入版本库
+├─ tests/test_core.py      不依赖 PsychoPy 的单元测试
 ├─ docs/design.md          实现细节与设计取舍
 ├─ 使用说明.md             施测现场用的手册
-├─ README.upstream.md      上游版本说明（存档）
-├─ IAT.py 等               上游版本原文件，未改动
-└─ .gitattributes          换行符规则
+├─ upstream/               上游版本原样存档，不参与运行
+├─ LICENSE                 GPLv3
+├─ .gitattributes          换行符规则
+└─ .gitignore              数据与缓存排除规则
 ```
 
 ## 不要做的事

@@ -15,7 +15,7 @@ seven-block design, and writes one row per trial to disk. It has no setup wizard
 and makes no network requests.
 
 [User manual (Chinese)](使用说明.md) · [Design notes (Chinese)](docs/design.md) ·
-[Upstream archive](README.upstream.md)
+[Upstream archive](upstream/README.md)
 
 ---
 

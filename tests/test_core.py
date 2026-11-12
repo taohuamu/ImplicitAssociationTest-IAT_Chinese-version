@@ -133,7 +133,6 @@ for b in cas_t:
     body = INSTR[b['instr']].format(**fmt)
     ok('{' not in body and '}' not in body,
        '区块 %d 说明页无残留占位符' % b['no'], body[:40])
-    ok('或' in fmt['COMMON'] or True, '')
 
 consent = INSTR['consent'].format(KEY_L='E', KEY_R='I')
 ok('{' not in consent, '同意页无残留占位符')
