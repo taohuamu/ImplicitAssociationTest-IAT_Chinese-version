@@ -19,7 +19,7 @@ import yaml
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-__version__ = '2.3.0'
+__version__ = '2.4.0'
 
 DEFAULTS = {
     'rt_max': 10000.0,
@@ -100,9 +100,15 @@ def score_participant(pid, rows, opt):
     order = rows[0].get('order', '') if rows else ''
     layout = rows[0].get('layout', '') if rows else ''
 
-    # 超时未作答的试次不计入正确率。（旧文件没有 timed_out 列，按 0 处理，口径不变）
+    # 超时的两种情况分开算：
+    #   从未按键（first_key 为空）＝没作答，不计入正确率；
+    #   按过键但没按对就超时＝答错，计入正确率。
+    # 旧文件没有 timed_out 列，一律按未超时处理，口径与从前一致。
     def _answered(r):
-        return str(r.get('timed_out', '0')).strip() not in ('1', 'true', 'True')
+        to = str(r.get('timed_out', '0')).strip() in ('1', 'true', 'True')
+        if not to:
+            return True
+        return bool(str(r.get('first_key') or '').strip())
 
     answered = [r for r in combined if _answered(r)]
     n_total = len(answered)

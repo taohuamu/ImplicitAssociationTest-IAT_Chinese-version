@@ -19,7 +19,7 @@ import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-__version__ = '2.3.0'
+__version__ = '2.4.0'
 
 T_CONCEPT_1, T_CONCEPT_2, T_ATTR_1, T_ATTR_2 = 1, 2, 3, 4
 TYPE_NAMES = {T_CONCEPT_1: 'concept_1', T_CONCEPT_2: 'concept_2',

@@ -196,6 +196,18 @@ case('R17', '联合试次全部超时时，剔除原因为「未作答」而不�
      allto_res['exclude_reason'])
 
 
+mix_rows = [
+    dict(r, timed_out='1', first_key='i', first_key_correct='0', rt_correct='')
+    for r in rows_with_timeout()[:1]
+]
+pair = [dict(r, timed_out='0', first_key='e', first_key_correct='1', rt_correct='0.6000')
+        for r in rows_with_timeout()[:3]]
+mix_res = S.score_participant('T001', pair + mix_rows, OPT)
+case('R18', '按过键但没按对就超时的试次算作答错，计入正确率分母',
+     mix_res['n_test_trials'] == 4 and abs(float(mix_res['accuracy']) - 3 / 4) < 1e-4,
+     'n=%s acc=%s' % (mix_res['n_test_trials'], mix_res['accuracy']))
+
+
 # ---------------------------------------------------------------- 数据文件
 
 src = open(os.path.join(ROOT, 'run.py'), encoding='utf-8').read()
