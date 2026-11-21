@@ -190,6 +190,9 @@ python run.py --check-only   # 只校验配置，不弹窗
   association test: I. An improved scoring algorithm. *Journal of Personality and Social Psychology, 85*(2), 197–216.
 - Greenwald, A. G., McGhee, D. E., & Schwartz, J. L. K. (1998). Measuring individual differences in
   implicit cognition: The implicit association test. *Journal of Personality and Social Psychology, 74*(6), 1464–1480.
+- Nosek, B. A., Greenwald, A. G., & Banaji, M. R. (2007). The Implicit Association Test at age 7:
+  A methodological and conceptual review. In J. A. Bargh (Ed.), *Social psychology and the unconscious*
+  (pp. 265–292). Psychology Press. 计分依该书第 273 页的八步。
 - 施媛媛, 蔡华俭. (2016). 简式内隐联系测验原理及最新研究进展. 中国科学院心理研究所.
   https://www.psych.ac.cn/news/kyjz/202202/t20220224_6373690.html
   表 1 给出 IAT 的七组块设计（180 试次），`cas7` 布局据此实现。
