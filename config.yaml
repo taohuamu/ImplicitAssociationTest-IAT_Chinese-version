@@ -8,10 +8,11 @@
 experiment:
   name: IAT
   # 布局：
-  #   cas7       中科院心理所七区块（180 试次，当前默认）
-  #   nosek7     Nosek(2007) 七区块（200 试次，练习块更长）
+  #   greenwald7 标准七区块（190 试次，当前默认）——目标词先行，区块 5 用 30 试次
+  #   nosek7     同上，但区块 5 用 40 试次（200 试次）
+  #   cas7       中科院心理所七区块（180 试次）——属性词先行，与上面两种顺序相反
   #   greenwald5 Greenwald(1998) 五部分（140 试次）
-  layout: cas7
+  layout: greenwald7
   # 中文字体。auto = 按操作系统自动挑选（Windows 用微软雅黑）
   # 也可以直接写字体名，例如 "SimHei"
   font: auto
@@ -20,6 +21,12 @@ window:
   size: [1366, 768]      # 非全屏时的窗口尺寸
   fullscreen: true
   background: black
+
+# 目标词与属性词用不同颜色，避免被试分不清该按类别还是按词义归类
+# （Greenwald 等 2022，建议 A9。英文材料还能靠大小写区分，中文只能靠颜色或字体）
+display:
+  target_color: white        # 概念词，如 玫瑰、蟑螂
+  attribute_color: lightgray # 属性词，如 喜爱、战争
 
 keys:
   left: e
@@ -41,14 +48,14 @@ timing:
 #             反应时记的是"改对之后"的时间）
 #   advance = 不显示任何反馈，答错也直接进入下一试次
 #             （计分时会给错误试次加 600ms 惩罚，见 score.py）
-# default 是默认行为，下面按区块号单独覆盖；区块号见 check.cmd 的输出
+# default 是默认行为，下面可按区块号单独覆盖；区块号见 check.cmd 的输出
+#
+# 2022 年的最佳实践把「等到按对才记录反应时」列为首选做法（附录 A），
+# 理由是内置的错误惩罚优于事后加毫秒（Greenwald, Nosek & Banaji, 2003）。
+# 只有在软件无法等被试改对时才退回 advance。本程序能等，所以七个区块都设 correct。
 # ----------------------------------------------------------------------------
 error_handling:
   default: correct
-  3: advance
-  4: advance
-  6: advance
-  7: advance
 
 # ----------------------------------------------------------------------------
 # 计分参数。默认值 = Greenwald, Nosek & Banaji (2003) Table 4 的改进算法
@@ -64,6 +71,9 @@ scoring:
   delete_below_400: false
   # advance 模式下，错误试次替换为「该区块正确均值 + 这个惩罚」
   error_penalty: 600
+  # 合并标准差用哪些试次：all = 全部试次（2022 附录 B 的标准做法）
+  #                        correct = 只用正确试次（早期文献中的变体）
+  sd_basis: all
 
 # ----------------------------------------------------------------------------
 # 属性词：全程固定在屏幕某一侧，不参与左右互换

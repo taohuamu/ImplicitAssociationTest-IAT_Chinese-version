@@ -37,24 +37,27 @@
 
 ## 实验设计
 
-七个区块，合计 180 试次，约需 4 分半。区块 1 为属性词辨别，区块 2 为目标词辨别，
-区块 3、4 为相容联合任务，区块 5 至 7 的左右两侧整体互换。
+七个区块，合计 190 试次，约需五分钟。区块 1 练目标词、区块 2 练属性词，
+顺序不可颠倒（Greenwald 等 2022 建议 B5）；区块 3、4 为相容联合任务，区块 5 之后左右整体互换。
 
 | 区块 | 左侧 | 右侧 | 试次 | 性质 |
 |---|---|---|---|---|
-| 1 | 消极 | 积极 | 20 | 属性词辨别 |
-| 2 | 虫 | 花 | 20 | 初始目标词辨别 |
-| 3 | 虫 或 消极 | 花 或 积极 | 20 | 初始联合辨别（练习） |
-| 4 | 虫 或 消极 | 花 或 积极 | 40 | 初始联合辨别（正式） |
-| 5 | 花 | 虫 | 20 | 相反目标词辨别 |
-| 6 | 花 或 消极 | 虫 或 积极 | 20 | 相反联合辨别（练习） |
-| 7 | 花 或 消极 | 虫 或 积极 | 40 | 相反联合辨别（正式） |
+| 1 | 虫 | 花 | 20 | 目标词辨别 |
+| 2 | 消极 | 积极 | 20 | 属性词辨别 |
+| 3 | 虫 或 消极 | 花 或 积极 | 20 | 相容联合（练习） |
+| 4 | 虫 或 消极 | 花 或 积极 | 40 | 相容联合（正式） |
+| 5 | 花 | 虫 | 30 | 相反目标词辨别 |
+| 6 | 花 或 消极 | 虫 或 积极 | 20 | 不相容联合（练习） |
+| 7 | 花 或 消极 | 虫 或 积极 | 40 | 不相容联合（正式） |
 
 被试编号以 T 开头者先做相容配对，以 F 开头者先做不相容配对，两类交替安排以抵消顺序效应。
 表中的左右安排是 T 组的样子，F 组整体镜像。
 
-区块 1、2、5 答错会显示红叉并要求按对才继续；区块 3、4、6、7 答错直接进入下一题。
-两种规则都逐试次写进数据，计分时按数据里的记录处理，不看当前配置。
+联合区块内目标词与属性词严格交替出现，同键连续不超过四个试次（建议 B3、B8）。
+七个区块答错都显示红叉、按对才继续，反应时记的是改对之后的时刻（附录 A 的首选做法）。
+
+概念词与属性词用不同颜色呈现，避免被试把属性词当成目标词归类（建议 A9）。
+以上几条的依据见文末 [参考文献](#参考文献)。
 
 ## 工作原理
 
@@ -112,8 +115,12 @@ python score.py                      # 扫 data 目录
 python score.py data/T001_xxx.csv    # 只算一个被试
 ```
 
-严格按 Greenwald 等（2003）Table 4 的十二步：只取区块 3、4、6、7；剔除超时与快速试次；
-合并标准差只用正确试次；错误试次替换为区块均值加 600 毫秒；两个差值分别除以标准差后取平均。
+按 Greenwald 等（2003）的 D 值算法、Greenwald 等（2022）附录 B 的现行写法：只取区块 3、4、6、7；
+剔除慢于 10 秒的试次，剔除快速试次超过一成的被试；两段合并标准差用全部试次；
+两个差值分别除以标准差后取平均。
+
+标准差口径可在配置里切换。设成 `correct` 会只用正确试次，那是早期文献里的变体，
+与现有口径算出的 D 不能直接比较。
 
 输出 `processed.csv`，一人一行，含 D1、两个分项、正确率、快速试次占比与剔除原因。
 
@@ -174,11 +181,21 @@ python run.py --check-only   # 只校验配置，不弹窗
   否则改了 `error_handling` 说明页就和实际行为脱节。
 - **不要改 `error_handling` 却不改论文口径。** 程序行为与论文方法部分必须一致。
 
+## 参考文献
+
+- Greenwald, A. G., Brendl, C. M., Cai, H., et al. (2022). Best research practices for using the
+  Implicit Association Test. *Behavior Research Methods, 54*, 1161–1180.
+  本版的区块顺序、目标与属性交替、同键连续上限、配色区分、错误处理与计分口径均据此文的建议与附录 A、B。
+- Greenwald, A. G., Nosek, B. A., & Banaji, M. R. (2003). Understanding and using the implicit
+  association test: I. An improved scoring algorithm. *Journal of Personality and Social Psychology, 85*(2), 197–216.
+- Greenwald, A. G., McGhee, D. E., & Schwartz, J. L. K. (1998). Measuring individual differences in
+  implicit cognition: The implicit association test. *Journal of Personality and Social Psychology, 74*(6), 1464–1480.
+
 ## 声明
 
 本仓库在 [ianhussey/IAT](https://github.com/ianhussey/IAT)（Ian Hussey, 2016）的基础上汉化并适配，
 上游文件原样保留。实验范式源自 Greenwald, McGhee 与 Schwartz（1998），
-区块设计参考中国科学院心理研究所公开的七区块方案，计分遵循 Greenwald, Nosek 与 Banaji（2003）。
+计分遵循 Greenwald, Nosek 与 Banaji（2003），施测细节依 Greenwald 等（2022）的最佳实践。
 
 ## License
 

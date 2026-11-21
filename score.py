@@ -19,7 +19,7 @@ import yaml
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-__version__ = '2.1.0'
+__version__ = '2.2.0'
 
 DEFAULTS = {
     'rt_max': 10000.0,
@@ -28,6 +28,7 @@ DEFAULTS = {
     'error_rate_exclude': None,
     'delete_below_400': False,
     'error_penalty': 600.0,
+    'sd_basis': 'all',
 }
 
 REQUIRED_COLS = {'participant', 'order', 'layout', 'block', 'block_kind',
@@ -93,6 +94,7 @@ def score_participant(pid, rows, opt):
     fast_limit = float(opt['fast_pct_limit'])
     penalty = float(opt['error_penalty'])
     drop_fast_400 = bool(opt['delete_below_400'])
+    sd_basis = str(opt.get('sd_basis') or 'all').lower()
 
     combined = [r for r in rows if r.get('pairing') in ('compatible', 'incompatible')]
     order = rows[0].get('order', '') if rows else ''
@@ -157,7 +159,10 @@ def score_participant(pid, rows, opt):
         b_inc = pair.get('incompatible')
         if not b_comp or not b_inc:
             continue
-        sd_pool = block_correct_rts[b_comp] + block_correct_rts[b_inc]
+        if sd_basis == 'correct':
+            sd_pool = block_correct_rts[b_comp] + block_correct_rts[b_inc]
+        else:
+            sd_pool = block_scoring[b_comp] + block_scoring[b_inc]
         if len(sd_pool) < 2:
             continue
         sd = st.stdev(sd_pool)

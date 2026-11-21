@@ -19,7 +19,7 @@ import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-__version__ = '2.1.0'
+__version__ = '2.2.0'
 
 T_CONCEPT_1, T_CONCEPT_2, T_ATTR_1, T_ATTR_2 = 1, 2, 3, 4
 TYPE_NAMES = {T_CONCEPT_1: 'concept_1', T_CONCEPT_2: 'concept_2',
@@ -48,6 +48,22 @@ LAYOUTS = {
              plan=[(T_CONCEPT_1, 10), (T_CONCEPT_2, 10), (T_ATTR_1, 10), (T_ATTR_2, 10)]),
         dict(no=5, kind='concept', phase='second', instr='b5', score=False,
              plan=[(T_CONCEPT_1, 20), (T_CONCEPT_2, 20)]),
+        dict(no=6, kind='combined', phase='second', instr='b6', score=True,
+             plan=[(T_CONCEPT_1, 5), (T_CONCEPT_2, 5), (T_ATTR_1, 5), (T_ATTR_2, 5)]),
+        dict(no=7, kind='combined', phase='second', instr='b7', score=True,
+             plan=[(T_CONCEPT_1, 10), (T_CONCEPT_2, 10), (T_ATTR_1, 10), (T_ATTR_2, 10)]),
+    ],
+    'greenwald7': [
+        dict(no=1, kind='concept', phase='first', instr='b1', score=False,
+             plan=[(T_CONCEPT_1, 10), (T_CONCEPT_2, 10)]),
+        dict(no=2, kind='attribute', phase='first', instr='b2', score=False,
+             plan=[(T_ATTR_1, 10), (T_ATTR_2, 10)]),
+        dict(no=3, kind='combined', phase='first', instr='b3', score=True,
+             plan=[(T_CONCEPT_1, 5), (T_CONCEPT_2, 5), (T_ATTR_1, 5), (T_ATTR_2, 5)]),
+        dict(no=4, kind='combined', phase='first', instr='b4', score=True,
+             plan=[(T_CONCEPT_1, 10), (T_CONCEPT_2, 10), (T_ATTR_1, 10), (T_ATTR_2, 10)]),
+        dict(no=5, kind='concept', phase='second', instr='b5', score=False,
+             plan=[(T_CONCEPT_1, 15), (T_CONCEPT_2, 15)]),
         dict(no=6, kind='combined', phase='second', instr='b6', score=True,
              plan=[(T_CONCEPT_1, 5), (T_CONCEPT_2, 5), (T_ATTR_1, 5), (T_ATTR_2, 5)]),
         dict(no=7, kind='combined', phase='second', instr='b7', score=True,
@@ -290,6 +306,33 @@ def _make_pool(words, n, rng):
     return pool[:n]
 
 
+def _interleave(cfg, plan, sides, rng):
+    """联合区块按四元组排列：目标词、属性词严格交替，同键连续不超过四个。
+
+    每个四元组占四个位置，第 1、3 位放两个目标类别各一个，第 2、4 位放两个
+    属性类别各一个。这样既保证目标与属性交替（Greenwald 等 2022 建议 B3），
+    又把同键连续试次限制在四个以内（建议 B8）。
+    """
+    pools = {t: _make_pool(_exemplars_of(cfg, t), n, rng) for t, n in plan}
+    targets = [t for t in pools if t in (T_CONCEPT_1, T_CONCEPT_2)]
+    attrs = [t for t in pools if t in (T_ATTR_1, T_ATTR_2)]
+
+    n_quartet = min(len(pools[t]) for t in pools)
+    trials = []
+    for _ in range(n_quartet):
+        pair_t = list(targets)
+        pair_a = list(attrs)
+        rng.shuffle(pair_t)
+        rng.shuffle(pair_a)
+        for t in (pair_t[0], pair_a[0], pair_t[1], pair_a[1]):
+            trials.append(dict(type=t, word=pools[t].pop(), side=sides[t]))
+
+    rest = [dict(type=t, word=w, side=sides[t]) for t in pools for w in pools[t]]
+    rng.shuffle(rest)
+    trials.extend(rest)
+    return trials
+
+
 def build_blocks(cfg, order, rng):
     """按布局生成每个区块及其完整试次列表。"""
     layout = cfg['experiment'].get('layout', 'nosek7')
@@ -302,11 +345,14 @@ def build_blocks(cfg, order, rng):
         sides.update(c_sides)
         sides.update(a_sides)
 
-        trials = []
-        for ttype, n in spec['plan']:
-            for word in _make_pool(_exemplars_of(cfg, ttype), n, rng):
-                trials.append(dict(type=ttype, word=word, side=sides[ttype]))
-        rng.shuffle(trials)
+        if spec['kind'] == 'combined':
+            trials = _interleave(cfg, spec['plan'], sides, rng)
+        else:
+            trials = []
+            for ttype, n in spec['plan']:
+                for word in _make_pool(_exemplars_of(cfg, ttype), n, rng):
+                    trials.append(dict(type=ttype, word=word, side=sides[ttype]))
+            rng.shuffle(trials)
 
         if spec['kind'] == 'combined':
             pairing = 'compatible' if c_sides[T_CONCEPT_1] == a_sides[T_ATTR_1] else 'incompatible'
@@ -451,6 +497,9 @@ def run_experiment(cfg, code, order, seed):
     rt_timeout = float(timing.get('rt_timeout', 0) or 0)
     font = pick_cjk_font(exp.get('font', 'auto'))
     instr = cfg['instructions']
+    disp = cfg.get('display') or {}
+    color_target = str(disp.get('target_color', 'white'))
+    color_attr = str(disp.get('attribute_color', 'white'))
 
     rng = random.Random(seed)
     blocks = build_blocks(cfg, order, rng)
@@ -588,6 +637,8 @@ def run_experiment(cfg, code, order, seed):
 
             for i, trial in enumerate(block['trials'], start=1):
                 stim.text = trial['word']
+                stim.color = (color_target if trial['type'] in (T_CONCEPT_1, T_CONCEPT_2)
+                              else color_attr)
                 correct_key = kl if trial['side'] == 'left' else kr
 
                 for s in side_labels:

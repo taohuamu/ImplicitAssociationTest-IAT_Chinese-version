@@ -37,14 +37,14 @@ def eq(got, want, name):
 cfg = R.load_config(os.path.join(IAT_DIR, 'config.yaml'))
 
 eq(sorted(cfg.keys()),
-   sorted(['experiment', 'window', 'keys', 'timing', 'error_handling',
+   sorted(['experiment', 'window', 'display', 'keys', 'timing', 'error_handling',
            'scoring', 'concepts', 'attributes', 'instructions']),
-   '配置含九个顶层段落')
+   '配置含十个顶层段落')
 
 R.validate(cfg)
 ok(True, '出厂配置通过校验')
 
-eq(cfg['experiment']['layout'], 'cas7', '默认布局为 cas7')
+eq(cfg['experiment']['layout'], 'greenwald7', '默认布局为 greenwald7')
 eq(cfg['keys'], {'left': 'e', 'right': 'i'}, '默认按键为 e 与 i')
 
 # 被试编号
@@ -82,7 +82,32 @@ eq([b['kind'] for b in cas_t], ['attribute', 'concept', 'combined', 'combined',
    'cas7 区块类型顺序')
 eq(sum(b['n_trials'] for b in cas_t if b['score']), 120, 'cas7 计分试次 120')
 
+green7 = blocks_of('T', 'greenwald7')
+eq(len(green7), 7, 'greenwald7 共七个区块')
+eq(sizes(green7), [20, 20, 20, 40, 30, 20, 40], 'greenwald7 各区块试次')
+eq(sum(sizes(green7)), 190, 'greenwald7 合计 190 试次')
+eq(green7[0]['kind'], 'concept', 'greenwald7 目标词先行')
+eq(green7[1]['kind'], 'attribute', 'greenwald7 第二个区块为属性词')
+
 nosek = blocks_of('T', 'nosek7')
+
+TY = {1: 'target', 2: 'target', 3: 'attr', 4: 'attr'}
+for lay_blocks, lay_name in ((green7, 'greenwald7'), (cas_t, 'cas7'), (nosek, 'nosek7')):
+    for b in lay_blocks:
+        if b['kind'] != 'combined':
+            continue
+        kinds = [TY[t['type']] for t in b['trials']]
+        ok(all(kinds[i] != kinds[i + 1] for i in range(len(kinds) - 1)),
+           '%s 区块 %d 目标与属性严格交替' % (lay_name, b['no']))
+        run = mx = 1
+        for i in range(1, len(b['trials'])):
+            if b['trials'][i]['side'] == b['trials'][i - 1]['side']:
+                run += 1
+                mx = max(mx, run)
+            else:
+                run = 1
+        ok(mx <= 4, '%s 区块 %d 同键连续不超过四个' % (lay_name, b['no']), '实际 %d' % mx)
+
 eq(sizes(nosek), [20, 20, 20, 40, 40, 20, 40], 'nosek7 各区块试次')
 eq(sum(sizes(nosek)), 200, 'nosek7 合计 200 试次')
 
@@ -190,9 +215,15 @@ for row in with_err:
     if row['block'] == '6':
         row['first_key_correct'] = '0'
         row['n_errors'] = '1'
-res_err = S.score_participant('T001', with_err, OPT)
-ok(res_err['D1'] > res['D1'], 'advance 区块错答后 D 变大',
-   '原 %.6f，含错 %.6f' % (res['D1'], res_err['D1']))
+OPT_CORRECT = dict(OPT, sd_basis='correct')
+base_c = S.score_participant('T001', synth(), OPT_CORRECT)
+res_err = S.score_participant('T001', with_err, OPT_CORRECT)
+ok(res_err['D1'] > base_c['D1'], 'advance 区块错答后 D 变大（标准差只用正确试次）',
+   '原 %.6f，含错 %.6f' % (base_c['D1'], res_err['D1']))
+
+res_all = S.score_participant('T001', with_err, dict(OPT, sd_basis='all'))
+ok(abs(res_all['D1'] - res_err['D1']) > 1e-6, '两种标准差口径给出不同的 D',
+   'all %.6f / correct %.6f' % (res_all['D1'], res_err['D1']))
 ok(res_err['mean_rt_incompatible'] > res['mean_rt_incompatible'],
    '错答使不相容均值上升')
 
