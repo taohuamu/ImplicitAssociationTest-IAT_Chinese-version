@@ -19,7 +19,7 @@ import yaml
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-__version__ = '2.4.0'
+__version__ = '2.4.1'
 
 DEFAULTS = {
     'rt_max': 10000.0,
