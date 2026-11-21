@@ -731,7 +731,7 @@ def run_experiment(cfg, code, order, seed):
                 win.flip()
 
                 writer.writerow(dict(
-                    participant=code, order=order, layout=exp.get('layout', 'nosek7'),
+                    participant=code, order=order, layout=exp.get('layout', 'greenwald7'),
                     block=block['no'], block_kind=block['kind'], pairing=block['pairing'],
                     error_mode=err_mode, block_trials=block['n_trials'], trial_in_block=i,
                     trial_type=TYPE_NAMES[trial['type']], stimulus=trial['word'],
