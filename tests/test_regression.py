@@ -77,6 +77,18 @@ for blk in combined(b1):
 case('R5', '联合区块同键连续不超过四个', worst <= 4, '实际最长 %d' % worst)
 
 
+import copy as _copy
+
+_c2 = _copy.deepcopy(CFG)
+del _c2['experiment']['layout']
+case('R13', '配置缺少 experiment.layout 时校验直接报错，不静默套用某个布局',
+     bool(R.validate(_c2)), str(R.validate(_c2))[:60])
+
+case('R14', '区块结构由配置里的 layout 决定：显式写 nosek7 时区块 5 为 40 试次',
+     [b['n_trials'] for b in build(layout='nosek7')] == [20, 20, 20, 40, 40, 20, 40],
+     str([b['n_trials'] for b in build(layout='nosek7')]))
+
+
 # ---------------------------------------------------------------- 计分
 
 def rows_of(pairs, mode='advance', block_trials=4):

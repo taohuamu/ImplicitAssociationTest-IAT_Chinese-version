@@ -126,8 +126,12 @@ def validate(cfg):
     errs = []
 
     exp = cfg.get('experiment') or {}
-    layout = exp.get('layout', 'nosek7')
-    if layout not in LAYOUTS:
+    layout = exp.get('layout')
+    if not layout:
+        errs.append("experiment.layout 必须显式填写，可选 %s。"
+                    "该字段决定区块结构，也写进每一行数据，不能靠默认值推断。"
+                    % ' / '.join(LAYOUTS))
+    elif layout not in LAYOUTS:
         errs.append("experiment.layout 只能是 %s，当前为 %r"
                     % (' / '.join(LAYOUTS), layout))
 
@@ -335,7 +339,7 @@ def _interleave(cfg, plan, sides, rng):
 
 def build_blocks(cfg, order, rng):
     """按布局生成每个区块及其完整试次列表。"""
-    layout = cfg['experiment'].get('layout', 'nosek7')
+    layout = cfg['experiment']['layout']
     a_sides = _attr_sides(cfg)
     blocks = []
 
@@ -731,7 +735,7 @@ def run_experiment(cfg, code, order, seed):
                 win.flip()
 
                 writer.writerow(dict(
-                    participant=code, order=order, layout=exp.get('layout', 'greenwald7'),
+                    participant=code, order=order, layout=exp['layout'],
                     block=block['no'], block_kind=block['kind'], pairing=block['pairing'],
                     error_mode=err_mode, block_trials=block['n_trials'], trial_in_block=i,
                     trial_type=TYPE_NAMES[trial['type']], stimulus=trial['word'],
