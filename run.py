@@ -19,7 +19,7 @@ import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-__version__ = '2.2.0'
+__version__ = '2.3.0'
 
 T_CONCEPT_1, T_CONCEPT_2, T_ATTR_1, T_ATTR_2 = 1, 2, 3, 4
 TYPE_NAMES = {T_CONCEPT_1: 'concept_1', T_CONCEPT_2: 'concept_2',
@@ -556,7 +556,7 @@ def run_experiment(cfg, code, order, seed):
     fields = ['participant', 'order', 'layout', 'block', 'block_kind', 'pairing',
               'error_mode', 'block_trials', 'trial_in_block', 'trial_type', 'stimulus',
               'stim_side', 'correct_key', 'first_key', 'first_key_correct',
-              'rt_first', 'rt_correct', 'n_errors', 'timestamp']
+              'rt_first', 'rt_correct', 'n_errors', 'timed_out', 'timestamp']
     fh = open(stem + '.csv', 'w', encoding='utf-8-sig', newline='')
     writer = csv.DictWriter(fh, fieldnames=fields)
     writer.writeheader()
@@ -673,6 +673,7 @@ def run_experiment(cfg, code, order, seed):
                 n_err = 0
                 mark_on = False
                 done = False
+                timed_out = False
 
                 while not done:
                     # 1) 先取按键。timeStamped 用的是事件时间，不是轮询时刻
@@ -724,6 +725,7 @@ def run_experiment(cfg, code, order, seed):
                     if mark_on:
                         mark.setAutoDraw(True)
                     if rt_timeout > 0 and (clock.getTime() - onset['t']) > rt_timeout:
+                        timed_out = True
                         done = True
                         break
                     win.flip()
@@ -745,6 +747,7 @@ def run_experiment(cfg, code, order, seed):
                     rt_first='%.4f' % rt_first if rt_first is not None else '',
                     rt_correct='%.4f' % rt_correct if rt_correct is not None else '',
                     n_errors=n_err,
+                    timed_out=int(timed_out),
                     timestamp=_dt.datetime.now().isoformat(timespec='seconds')))
                 fh.flush()
     except SystemExit:

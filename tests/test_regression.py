@@ -155,14 +155,55 @@ case('R10', '超过 10000ms 的试次被剔除，但不计入试次总数',
      'n=%s 相容均值=%s' % (ress['n_test_trials'], ress['mean_rt_compatible']))
 
 
+def rows_with_timeout():
+    out = []
+    for no, pairing, ok, rt, to in ((3, 'compatible', 1, 600, 0), (3, 'compatible', 1, 700, 0),
+                                    (3, 'compatible', 1, 800, 0), (3, 'compatible', 0, 900, 0),
+                                    (6, 'incompatible', 1, 650, 0), (6, 'incompatible', 1, 750, 0),
+                                    (6, 'incompatible', 0, 0, 1), (6, 'incompatible', 0, 0, 1)):
+        out.append(dict(
+            participant='T001', order='T', layout='test', block=str(no),
+            block_kind='combined', pairing=pairing, error_mode='correct',
+            block_trials='4', trial_in_block='1', trial_type='concept_1', stimulus='虫',
+            stim_side='left', correct_key='e',
+            first_key='' if to else ('e' if ok else 'i'),
+            first_key_correct='1' if ok else '0',
+            rt_first='%.4f' % (rt / 1000.0), rt_correct='' if to else '%.4f' % (rt / 1000.0),
+            n_errors='0', timed_out=str(to), timestamp=''))
+    return out
+
+
+rt_rows = rows_with_timeout()
+rt_res = S.score_participant('T001', rt_rows, OPT)
+case('R15', '带 timed_out=1 的行不计入正确率分母：8 行中 2 行超时，n_test_trials 为 6、正确率为 5/6',
+     rt_res['n_test_trials'] == 6 and abs(float(rt_res['accuracy']) - 5 / 6) < 1e-4,
+     'n=%s acc=%s' % (rt_res['n_test_trials'], rt_res['accuracy']))
+
+old_rows = [dict(r) for r in rt_rows]
+for r in old_rows:
+    r.pop('timed_out')
+old_res = S.score_participant('T001', old_rows, OPT)
+case('R16', '旧文件没有 timed_out 列时口径不变：n_test_trials 仍为 8、正确率为 5/8',
+     old_res['n_test_trials'] == 8 and abs(float(old_res['accuracy']) - 5 / 8) < 1e-4,
+     'n=%s acc=%s' % (old_res['n_test_trials'], old_res['accuracy']))
+
+
+all_to = [dict(r, timed_out='1', rt_correct='', first_key='', first_key_correct='0')
+          for r in rows_with_timeout()[4:]]
+allto_res = S.score_participant('T001', all_to, OPT)
+case('R17', '联合试次全部超时时，剔除原因为「未作答」而不是「没有联合区块数据」',
+     allto_res['n_test_trials'] == 0 and '未作答' in allto_res['exclude_reason'],
+     allto_res['exclude_reason'])
+
+
 # ---------------------------------------------------------------- 数据文件
 
 src = open(os.path.join(ROOT, 'run.py'), encoding='utf-8').read()
 import re
 m = re.search(r"fields = \[(.*?)\]", src, re.S)
 fields = re.findall(r"'([a-z_]+)'", m.group(1)) if m else []
-case('R11', '写入的 csv 共 19 列，且覆盖计分所需的全部列',
-     len(fields) == 19 and S.REQUIRED_COLS <= set(fields),
+case('R11', '写入的 csv 共 20 列，且覆盖计分所需的全部列',
+     len(fields) == 20 and S.REQUIRED_COLS <= set(fields) and 'timed_out' in fields,
      '%d 列' % len(fields))
 
 tmp = tempfile.mkdtemp()

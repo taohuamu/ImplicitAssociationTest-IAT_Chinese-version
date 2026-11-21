@@ -19,7 +19,7 @@ import yaml
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-__version__ = '2.2.0'
+__version__ = '2.3.0'
 
 DEFAULTS = {
     'rt_max': 10000.0,
@@ -100,8 +100,13 @@ def score_participant(pid, rows, opt):
     order = rows[0].get('order', '') if rows else ''
     layout = rows[0].get('layout', '') if rows else ''
 
-    n_total = len(combined)
-    n_correct = sum(1 for r in combined if str(r.get('first_key_correct')) == '1')
+    # 超时未作答的试次不计入正确率。（旧文件没有 timed_out 列，按 0 处理，口径不变）
+    def _answered(r):
+        return str(r.get('timed_out', '0')).strip() not in ('1', 'true', 'True')
+
+    answered = [r for r in combined if _answered(r)]
+    n_total = len(answered)
+    n_correct = sum(1 for r in answered if str(r.get('first_key_correct')) == '1')
     acc = (n_correct / n_total) if n_total else float('nan')
 
     ok_rows = []
@@ -223,8 +228,10 @@ def score_participant(pid, rows, opt):
         d1998 = st.mean(clamp_log(inc_all)) - st.mean(clamp_log(comp_all))
 
     reasons = []
-    if n_total == 0:
+    if not combined:
         reasons.append('没有联合区块数据')
+    elif n_total == 0:
+        reasons.append('联合试次全部未作答（超时）')
     if pct_fast == pct_fast and pct_fast > fast_limit:
         reasons.append('快速试次 %.1f%% > %.0f%%' % (pct_fast * 100, fast_limit * 100))
     err_limit = opt.get('error_rate_exclude')
